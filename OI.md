@@ -1,4 +1,4 @@
-# OI - OneDrive Index
+# OI - Online Ideas
 
 Browse your OneDrive folders and render `OI.md` files as web pages.
 
@@ -13,6 +13,9 @@ Browse your OneDrive folders and render `OI.md` files as web pages.
 The app reads directly from your OneDrive. Your session stays active in your browser until you sign out.
 
 ## Changelog
+
+### 2026-02-24
+- **Changed:** Rebranded from "OneDrive Index" to "Online Ideas". Added rotating daily Douglas Adams quotes in footer. Removed "Hosted on GitHub Pages" message.
 
 ### 2026-02-24
 - **Fixed:** Removed leftover references to deleted btn-back button that was causing "Cannot read properties of null" error at app initialization.

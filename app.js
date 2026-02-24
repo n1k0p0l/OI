@@ -54,7 +54,28 @@ window.addEventListener("hashchange", () => {
     }
 });
 
+// Set daily Douglas Adams quote
+setDailyQuote();
+
 boot();
+
+function setDailyQuote() {
+    const quotes = [
+        "Don't Panic.",
+        "So long, and thanks for all the fish.",
+        "Time is an illusion. Lunchtime doubly so.",
+        "42",
+        "I'd far rather be happy than right any day.",
+        "Flying is learning how to throw yourself at the ground and miss.",
+        "In the beginning the Universe was created. This has made a lot of people very angry."
+    ];
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    const quote = quotes[dayOfYear % quotes.length];
+    const quoteElement = document.getElementById("quote-of-day");
+    if (quoteElement) {
+        quoteElement.textContent = `"${quote}" — Douglas Adams`;
+    }
+}
 
 async function boot() {
     try {
