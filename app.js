@@ -67,7 +67,7 @@ async function boot() {
         if (accounts.length) {
             state.account = accounts[0];
             setAuthUi(true);
-            
+
             // Check if there's a previously saved folder with OI.md
             const savedFolderId = localStorage.getItem("oi.selectedFolderId");
             if (savedFolderId && !getFolderIdFromHash()) {
@@ -149,9 +149,19 @@ async function openFolderById(folderId) {
     state.currentFolderName = current.name;
     state.currentFolderWebUrl = current.webUrl;
     updateBreadcrumb(folderId, current.name, current.webUrl);
+    
+    // Check if current folder has OI.md and show/hide "Use this folder" button
+    const hasOiMd = findOiFile(children.value) !== undefined;
+    ui.btnUseFolder.hidden = !hasOiMd;
+    
     renderFolderList(children);
     showBrowser();
-    setStatus("Select a folder. Use this folder to render OI.md if it exists.");
+    
+    if (hasOiMd) {
+        setStatus("This folder has OI.md. Click 'Use this folder' to view it.");
+    } else {
+        setStatus("Navigate to a folder containing OI.md.");
+    }
 }
 
 async function listChildren(folderId) {

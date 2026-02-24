@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Changed:** "Use this folder" button now only appears when the current folder contains an OI.md file, providing clearer feedback about which folders can be used.
+
+### 2026-02-24
 - **Added:** "Use another folder" button in viewer mode to return to root OneDrive and browse other folders. Auto-restore feature now loads previously selected OI.md folder on subsequent visits to the app (same device/browser).
 
 ### 2026-02-24
