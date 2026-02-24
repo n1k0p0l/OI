@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Fixed:** Folder navigation in OI.md now properly works - rewrote link handling to use custom `#folder:ID` markers instead of trying to parse OneDrive URLs.
+
+### 2026-02-24
 - **Added:** Folder links in rendered OI.md now navigate within the app instead of opening OneDrive webURL. Clicking a folder link now browses to that folder in the OI app.
 
 ### 2026-02-24

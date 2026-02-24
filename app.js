@@ -274,13 +274,13 @@ async function renderOiMarkdown(oiItem, itemsInFolder) {
     ui.viewerContent.innerHTML = DOMPurify.sanitize(html);
     ui.viewerTitle.textContent = oiItem.name;
     ui.viewerOpen.href = oiItem.webUrl || "#";
-    
+
     // Store current items for folder navigation
     state.currentFolderItems = itemsInFolder;
-    
+
     // Add click handlers to intercept folder links
     addFolderLinkHandlers();
-    
+
     showViewer();
     setStatus("Rendered OI.md");
 }
@@ -304,8 +304,14 @@ async function fetchFileContent(itemId) {
 function buildLinkMap(items) {
     const map = new Map();
     items.forEach((item) => {
-        if (item.name && item.webUrl) {
-            map.set(item.name, item.webUrl);
+        if (item.name) {
+            // Store with and without trailing slash for flexible matching
+            const baseName = item.name;
+            map.set(baseName, item);
+            map.set(baseName + "/", item);
+            // Also store URL-encoded versions
+            map.set(encodeURIComponent(baseName), item);
+            map.set(encodeURIComponent(baseName) + "/", item);
         }
     });
     return map;
@@ -319,39 +325,41 @@ function rewriteRelativeLinks(markdown, linkMap) {
             return match;
         }
         const normalized = clean.replace(/^\.\//, "");
-        const webUrl = linkMap.get(normalized);
-        if (!webUrl) {
+        const item = linkMap.get(normalized);
+        if (!item) {
             return match;
         }
-        return full.replace(url, webUrl);
+        
+        // For folders, use a special marker that we can detect later
+        if (item.folder) {
+            // Return link with data attribute marker
+            return full.replace(url, `#folder:${item.id}`);
+        } else {
+            // For files, use webUrl
+            return full.replace(url, item.webUrl || url);
+        }
     });
 }
 
 function addFolderLinkHandlers() {
     // Find all links in the viewer content
     const links = ui.viewerContent.querySelectorAll("a");
-    
+
     links.forEach((link) => {
-        link.addEventListener("click", async (e) => {
-            const href = link.getAttribute("href");
-            if (!href) return;
+        const href = link.getAttribute("href");
+        if (!href) return;
+        
+        // Check if this is a folder link (marked with #folder:ID)
+        if (href.startsWith("#folder:")) {
+            const folderId = href.replace("#folder:", "");
             
-            // Check if this link might be pointing to a folder in current folder
-            // Look for folder items that match this link
-            const folderItem = state.currentFolderItems.find((item) => {
-                if (!item.folder) return false;
-                // Check if link contains folder name or webUrl matches
-                return href.includes(item.webUrl) || href.includes(encodeURIComponent(item.name));
-            });
-            
-            if (folderItem) {
-                // Prevent default link behavior
+            link.addEventListener("click", async (e) => {
                 e.preventDefault();
                 // Navigate to this folder within the app
-                setHashFolder(folderItem.id);
-                await openFolderById(folderItem.id);
-            }
-        });
+                setHashFolder(folderId);
+                await openFolderById(folderId);
+            });
+        }
     });
 }
 
