@@ -39,13 +39,15 @@ const ui = {
     btnSignin: document.getElementById("btn-signin"),
     btnSignout: document.getElementById("btn-signout"),
     btnUseFolder: document.getElementById("btn-use-folder"),
-    btnBack: document.getElementById("btn-back")
+    btnBack: document.getElementById("btn-back"),
+    btnUseAnother: document.getElementById("btn-use-another")
 };
 
 ui.btnSignin.addEventListener("click", signIn);
 ui.btnSignout.addEventListener("click", signOut);
 ui.btnUseFolder.addEventListener("click", () => useCurrentFolder());
 ui.btnBack.addEventListener("click", () => showBrowser());
+ui.btnUseAnother.addEventListener("click", () => useAnotherFolder());
 
 window.addEventListener("hashchange", () => {
     const folderId = getFolderIdFromHash();
@@ -65,8 +67,18 @@ async function boot() {
         if (accounts.length) {
             state.account = accounts[0];
             setAuthUi(true);
-            await openFolderById(getFolderIdFromHash() || "root");
-            showBrowser();
+            
+            // Check if there's a previously saved folder with OI.md
+            const savedFolderId = localStorage.getItem("oi.selectedFolderId");
+            if (savedFolderId && !getFolderIdFromHash()) {
+                // Auto-restore last selected folder
+                await openFolderById(savedFolderId);
+                await useCurrentFolder();
+            } else {
+                // Navigate based on hash or go to root
+                await openFolderById(getFolderIdFromHash() || "root");
+                showBrowser();
+            }
         } else {
             setAuthUi(false);
             setStatus("Sign in to browse your OneDrive.");
@@ -328,6 +340,13 @@ function showBrowser() {
 function showViewer() {
     ui.browser.hidden = true;
     ui.viewer.hidden = false;
+}
+
+function useAnotherFolder() {
+    // Clear saved folder and go back to root
+    localStorage.removeItem("oi.selectedFolderId");
+    setHashFolder("root");
+    openFolderById("root");
 }
 
 function setStatus(message) {
