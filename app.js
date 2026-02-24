@@ -39,14 +39,12 @@ const ui = {
     btnSignin: document.getElementById("btn-signin"),
     btnSignout: document.getElementById("btn-signout"),
     btnUseFolder: document.getElementById("btn-use-folder"),
-    btnBack: document.getElementById("btn-back"),
     btnUseAnother: document.getElementById("btn-use-another")
 };
 
 ui.btnSignin.addEventListener("click", signIn);
 ui.btnSignout.addEventListener("click", signOut);
 ui.btnUseFolder.addEventListener("click", () => useCurrentFolder());
-ui.btnBack.addEventListener("click", () => showBrowser());
 ui.btnUseAnother.addEventListener("click", () => useAnotherFolder());
 
 window.addEventListener("hashchange", () => {
@@ -149,14 +147,14 @@ async function openFolderById(folderId) {
     state.currentFolderName = current.name;
     state.currentFolderWebUrl = current.webUrl;
     updateBreadcrumb(folderId, current.name, current.webUrl);
-    
+
     // Check if current folder has OI.md and show/hide "Use this folder" button
     const hasOiMd = findOiFile(children.value) !== undefined;
     ui.btnUseFolder.hidden = !hasOiMd;
-    
+
     renderFolderList(children);
     showBrowser();
-    
+
     if (hasOiMd) {
         setStatus("This folder has OI.md. Click 'Use this folder' to view it.");
     } else {

@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Fixed:** Removed leftover references to deleted btn-back button that was causing "Cannot read properties of null" error at app initialization.
+
+### 2026-02-24
 - **Changed:** "Use this folder" button now only appears when the current folder contains an OI.md file, providing clearer feedback about which folders can be used.
 
 ### 2026-02-24
