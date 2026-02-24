@@ -57,16 +57,23 @@ window.addEventListener("hashchange", () => {
 boot();
 
 async function boot() {
-    setStatus("Checking session...");
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length) {
-        state.account = accounts[0];
-        setAuthUi(true);
-        await openFolderById(getFolderIdFromHash() || "root");
-        showBrowser();
-    } else {
-        setAuthUi(false);
-        setStatus("Sign in to browse your OneDrive.");
+    try {
+        setStatus("Initializing...");
+        await msalInstance.initialize();
+        setStatus("Checking session...");
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length) {
+            state.account = accounts[0];
+            setAuthUi(true);
+            await openFolderById(getFolderIdFromHash() || "root");
+            showBrowser();
+        } else {
+            setAuthUi(false);
+            setStatus("Sign in to browse your OneDrive.");
+        }
+    } catch (err) {
+        setStatus("Initialization failed. Check console for details.");
+        console.error(err);
     }
 }
 
