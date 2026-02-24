@@ -33,3 +33,11 @@ The client ID is safe to expose in public code - it's designed to be public in S
 - This app only uses client-side JavaScript and Microsoft Graph.
 - Data is read live from your OneDrive.
 - Login session persists in browser localStorage (no server-side storage).
+
+## Changelog
+
+### 2026-02-24
+- **Fixed:** MSAL initialization error - Added `await msalInstance.initialize()` in boot() function to properly initialize MSAL before any authentication calls. This resolves "uninitialized_public_client_application" error when signing in.
+
+### 2026-02-24
+- **Initial Release:** Created OI SPA with Microsoft OAuth, OneDrive browsing, and OI.md rendering capabilities. Features include folder navigation, breadcrumb trail, relative link rewriting, and responsive design with warm serif aesthetic.
