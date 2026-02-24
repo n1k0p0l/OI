@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OI OneDrive Resume</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.21.0/lib/msal-browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+</head>
+
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="mark">OI</div>
+                <div class="titles">
+                    <div class="title">OneDrive Index</div>
+                    <div class="subtitle">Sign in, browse, and render OI.md</div>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="btn-signin" class="btn primary">Sign in</button>
+                <button id="btn-signout" class="btn" hidden>Sign out</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <section id="status" class="status">Loading...</section>
+
+            <section id="browser" class="browser" hidden>
+                <div class="browser-header">
+                    <div id="breadcrumb" class="breadcrumb"></div>
+                    <div class="browser-actions">
+                        <button id="btn-use-folder" class="btn accent">Use this folder</button>
+                    </div>
+                </div>
+                <div id="folder-list" class="folder-list"></div>
+            </section>
+
+            <section id="viewer" class="viewer" hidden>
+                <div class="viewer-header">
+                    <div id="viewer-title" class="viewer-title"></div>
+                    <div class="viewer-actions">
+                        <button id="btn-back" class="btn">Back to folders</button>
+                        <a id="viewer-open" class="btn" href="#" target="_blank" rel="noopener">Open in OneDrive</a>
+                    </div>
+                </div>
+                <article id="viewer-content" class="viewer-content"></article>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div>Hosted on GitHub Pages. Data is loaded live from OneDrive via Microsoft Graph.</div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

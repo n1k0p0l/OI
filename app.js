@@ -1,0 +1,355 @@
+/* global msal, marked, DOMPurify */
+
+const CONFIG = {
+    clientId: "0d2b8a4f-7cf8-4544-82a1-0096d711d4af",
+    redirectUri: getDefaultRedirectUri(),
+    authority: "https://login.microsoftonline.com/common",
+    scopes: ["User.Read", "Files.Read"]
+};
+
+const msalInstance = new msal.PublicClientApplication({
+    auth: {
+        clientId: CONFIG.clientId,
+        authority: CONFIG.authority,
+        redirectUri: CONFIG.redirectUri
+    },
+    cache: {
+        cacheLocation: "localStorage",
+        storeAuthStateInCookie: true
+    }
+});
+
+const state = {
+    account: null,
+    currentFolderId: "root",
+    currentFolderName: "Root",
+    currentFolderWebUrl: "",
+    folderStack: [{ id: "root", name: "Root", webUrl: "" }]
+};
+
+const ui = {
+    status: document.getElementById("status"),
+    browser: document.getElementById("browser"),
+    viewer: document.getElementById("viewer"),
+    folderList: document.getElementById("folder-list"),
+    breadcrumb: document.getElementById("breadcrumb"),
+    viewerTitle: document.getElementById("viewer-title"),
+    viewerContent: document.getElementById("viewer-content"),
+    viewerOpen: document.getElementById("viewer-open"),
+    btnSignin: document.getElementById("btn-signin"),
+    btnSignout: document.getElementById("btn-signout"),
+    btnUseFolder: document.getElementById("btn-use-folder"),
+    btnBack: document.getElementById("btn-back")
+};
+
+ui.btnSignin.addEventListener("click", signIn);
+ui.btnSignout.addEventListener("click", signOut);
+ui.btnUseFolder.addEventListener("click", () => useCurrentFolder());
+ui.btnBack.addEventListener("click", () => showBrowser());
+
+window.addEventListener("hashchange", () => {
+    const folderId = getFolderIdFromHash();
+    if (folderId) {
+        openFolderById(folderId);
+    }
+});
+
+boot();
+
+async function boot() {
+    setStatus("Checking session...");
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length) {
+        state.account = accounts[0];
+        setAuthUi(true);
+        await openFolderById(getFolderIdFromHash() || "root");
+        showBrowser();
+    } else {
+        setAuthUi(false);
+        setStatus("Sign in to browse your OneDrive.");
+    }
+}
+
+function setAuthUi(isSignedIn) {
+    ui.btnSignin.hidden = isSignedIn;
+    ui.btnSignout.hidden = !isSignedIn;
+}
+
+async function signIn() {
+    try {
+        setStatus("Signing in...");
+        const loginResponse = await msalInstance.loginPopup({
+            scopes: CONFIG.scopes,
+            prompt: "select_account"
+        });
+        state.account = loginResponse.account;
+        setAuthUi(true);
+        await openFolderById("root");
+        showBrowser();
+    } catch (err) {
+        setStatus("Sign-in failed. Check your app registration.");
+        console.error(err);
+    }
+}
+
+function signOut() {
+    if (!state.account) {
+        return;
+    }
+    msalInstance.logoutPopup({
+        account: state.account
+    });
+}
+
+async function getToken() {
+    if (!state.account) {
+        throw new Error("No account");
+    }
+    try {
+        const response = await msalInstance.acquireTokenSilent({
+            scopes: CONFIG.scopes,
+            account: state.account
+        });
+        return response.accessToken;
+    } catch (err) {
+        const response = await msalInstance.acquireTokenPopup({
+            scopes: CONFIG.scopes
+        });
+        return response.accessToken;
+    }
+}
+
+async function openFolderById(folderId) {
+    if (!state.account) {
+        return;
+    }
+    setStatus("Loading folder...");
+    state.currentFolderId = folderId;
+    const children = await listChildren(folderId);
+    const current = await getFolderInfo(folderId);
+    state.currentFolderName = current.name;
+    state.currentFolderWebUrl = current.webUrl;
+    updateBreadcrumb(folderId, current.name, current.webUrl);
+    renderFolderList(children);
+    showBrowser();
+    setStatus("Select a folder. Use this folder to render OI.md if it exists.");
+}
+
+async function listChildren(folderId) {
+    const token = await getToken();
+    const url = folderId === "root"
+        ? "https://graph.microsoft.com/v1.0/me/drive/root/children"
+        : `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`;
+    return fetchJson(url, token);
+}
+
+async function getFolderInfo(folderId) {
+    if (folderId === "root") {
+        return { id: "root", name: "Root", webUrl: "" };
+    }
+    const token = await getToken();
+    const url = `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}`;
+    const data = await fetchJson(url, token);
+    return { id: data.id, name: data.name, webUrl: data.webUrl || "" };
+}
+
+function renderFolderList(items) {
+    ui.folderList.innerHTML = "";
+    const folders = items.value.filter((item) => item.folder);
+    const files = items.value.filter((item) => item.file);
+
+    if (!folders.length && !files.length) {
+        ui.folderList.innerHTML = "<div>No items in this folder.</div>";
+        return;
+    }
+
+    folders.forEach((folder) => {
+        const row = document.createElement("div");
+        row.className = "folder-item";
+        row.innerHTML = `
+      <div>
+        <strong>${escapeHtml(folder.name)}</strong>
+        <div class="meta">Folder</div>
+      </div>
+      <div>
+        <button class="btn" data-folder-id="${folder.id}">Open</button>
+      </div>
+    `;
+        row.querySelector("button").addEventListener("click", () => {
+            setHashFolder(folder.id);
+            openFolderById(folder.id);
+        });
+        ui.folderList.appendChild(row);
+    });
+
+    files.forEach((file) => {
+        const row = document.createElement("div");
+        row.className = "folder-item";
+        const webUrl = file.webUrl || "#";
+        row.innerHTML = `
+      <div>
+        <strong>${escapeHtml(file.name)}</strong>
+        <div class="meta">File</div>
+      </div>
+      <div>
+        <a class="btn" href="${webUrl}" target="_blank" rel="noopener">Open</a>
+      </div>
+    `;
+        ui.folderList.appendChild(row);
+    });
+}
+
+async function useCurrentFolder() {
+    const children = await listChildren(state.currentFolderId);
+    const oiItem = findOiFile(children.value);
+    if (!oiItem) {
+        setStatus("No OI.md in this folder. Pick another folder.");
+        return;
+    }
+    localStorage.setItem("oi.selectedFolderId", state.currentFolderId);
+    await renderOiMarkdown(oiItem, children.value);
+}
+
+async function renderOiMarkdown(oiItem, itemsInFolder) {
+    setStatus("Loading OI.md...");
+    const markdown = await fetchFileContent(oiItem.id);
+    const linkMap = buildLinkMap(itemsInFolder);
+    const withLinks = rewriteRelativeLinks(markdown, linkMap);
+    const html = marked.parse(withLinks, { mangle: false, headerIds: false });
+    ui.viewerContent.innerHTML = DOMPurify.sanitize(html);
+    ui.viewerTitle.textContent = oiItem.name;
+    ui.viewerOpen.href = oiItem.webUrl || "#";
+    showViewer();
+    setStatus("Rendered OI.md");
+}
+
+function findOiFile(items) {
+    return items.find((item) => item.name && item.name.toLowerCase() === "oi.md");
+}
+
+async function fetchFileContent(itemId) {
+    const token = await getToken();
+    const url = `https://graph.microsoft.com/v1.0/me/drive/items/${itemId}/content`;
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+        throw new Error("Failed to download OI.md");
+    }
+    return res.text();
+}
+
+function buildLinkMap(items) {
+    const map = new Map();
+    items.forEach((item) => {
+        if (item.name && item.webUrl) {
+            map.set(item.name, item.webUrl);
+        }
+    });
+    return map;
+}
+
+function rewriteRelativeLinks(markdown, linkMap) {
+    const regex = /(!?\[[^\]]*\]\(([^)]+)\))/g;
+    return markdown.replace(regex, (match, full, url) => {
+        const clean = url.trim();
+        if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("#")) {
+            return match;
+        }
+        const normalized = clean.replace(/^\.\//, "");
+        const webUrl = linkMap.get(normalized);
+        if (!webUrl) {
+            return match;
+        }
+        return full.replace(url, webUrl);
+    });
+}
+
+function updateBreadcrumb(folderId, name, webUrl) {
+    if (folderId === "root") {
+        state.folderStack = [{ id: "root", name: "Root", webUrl: "" }];
+    } else {
+        const existingIndex = state.folderStack.findIndex((item) => item.id === folderId);
+        if (existingIndex >= 0) {
+            state.folderStack = state.folderStack.slice(0, existingIndex + 1);
+        } else {
+            state.folderStack.push({ id: folderId, name, webUrl });
+        }
+    }
+
+    ui.breadcrumb.innerHTML = "";
+    state.folderStack.forEach((item, index) => {
+        if (index > 0) {
+            const sep = document.createElement("span");
+            sep.textContent = "/";
+            ui.breadcrumb.appendChild(sep);
+        }
+        const btn = document.createElement("button");
+        btn.textContent = item.name;
+        btn.addEventListener("click", () => {
+            setHashFolder(item.id);
+            openFolderById(item.id);
+        });
+        ui.breadcrumb.appendChild(btn);
+    });
+}
+
+function setHashFolder(folderId) {
+    if (folderId === "root") {
+        window.location.hash = "#/root";
+        return;
+    }
+    window.location.hash = `#/folder/${folderId}`;
+}
+
+function getFolderIdFromHash() {
+    const hash = window.location.hash || "";
+    if (hash === "#/root") {
+        return "root";
+    }
+    if (hash.startsWith("#/folder/")) {
+        return hash.replace("#/folder/", "");
+    }
+    return null;
+}
+
+function showBrowser() {
+    ui.viewer.hidden = true;
+    ui.browser.hidden = false;
+}
+
+function showViewer() {
+    ui.browser.hidden = true;
+    ui.viewer.hidden = false;
+}
+
+function setStatus(message) {
+    ui.status.textContent = message;
+}
+
+async function fetchJson(url, token) {
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+        throw new Error("Graph request failed");
+    }
+    return res.json();
+}
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function getDefaultRedirectUri() {
+    const path = window.location.pathname;
+    if (path.endsWith("/OI/") || path.endsWith("/OI/index.html")) {
+        return window.location.origin + "/OI/";
+    }
+    return window.location.origin + path.replace(/index\.html$/, "");
+}
