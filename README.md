@@ -37,6 +37,9 @@ The client ID is safe to expose in public code - it's designed to be public in S
 ## Changelog
 
 ### 2026-02-24
+- **Added:** Created `.github/copilot-instructions.md` to ensure Copilot always reads changelog maintenance requirements in future conversations. Also created `CONVENTIONS.md` for detailed development guidelines.
+
+### 2026-02-24
 - **Fixed:** MSAL initialization error - Added `await msalInstance.initialize()` in boot() function to properly initialize MSAL before any authentication calls. This resolves "uninitialized_public_client_application" error when signing in.
 
 ### 2026-02-24
