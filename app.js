@@ -25,7 +25,8 @@ const state = {
     currentFolderName: "Root",
     currentFolderWebUrl: "",
     folderStack: [{ id: "root", name: "Root", webUrl: "" }],
-    msalInitialized: false
+    msalInitialized: false,
+    currentFolderItems: []
 };
 
 const ui = {
@@ -273,6 +274,13 @@ async function renderOiMarkdown(oiItem, itemsInFolder) {
     ui.viewerContent.innerHTML = DOMPurify.sanitize(html);
     ui.viewerTitle.textContent = oiItem.name;
     ui.viewerOpen.href = oiItem.webUrl || "#";
+    
+    // Store current items for folder navigation
+    state.currentFolderItems = itemsInFolder;
+    
+    // Add click handlers to intercept folder links
+    addFolderLinkHandlers();
+    
     showViewer();
     setStatus("Rendered OI.md");
 }
@@ -316,6 +324,34 @@ function rewriteRelativeLinks(markdown, linkMap) {
             return match;
         }
         return full.replace(url, webUrl);
+    });
+}
+
+function addFolderLinkHandlers() {
+    // Find all links in the viewer content
+    const links = ui.viewerContent.querySelectorAll("a");
+    
+    links.forEach((link) => {
+        link.addEventListener("click", async (e) => {
+            const href = link.getAttribute("href");
+            if (!href) return;
+            
+            // Check if this link might be pointing to a folder in current folder
+            // Look for folder items that match this link
+            const folderItem = state.currentFolderItems.find((item) => {
+                if (!item.folder) return false;
+                // Check if link contains folder name or webUrl matches
+                return href.includes(item.webUrl) || href.includes(encodeURIComponent(item.name));
+            });
+            
+            if (folderItem) {
+                // Prevent default link behavior
+                e.preventDefault();
+                // Navigate to this folder within the app
+                setHashFolder(folderItem.id);
+                await openFolderById(folderItem.id);
+            }
+        });
     });
 }
 

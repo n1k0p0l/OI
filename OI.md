@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Added:** Folder links in rendered OI.md now navigate within the app instead of opening OneDrive webURL. Clicking a folder link now browses to that folder in the OI app.
+
+### 2026-02-24
 - **Fixed:** Added initialization flag to prevent "uninitialized_public_client_application" error when clicking Sign in button before MSAL completes initialization.
 
 ### 2026-02-24
