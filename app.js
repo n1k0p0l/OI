@@ -24,7 +24,8 @@ const state = {
     currentFolderId: "root",
     currentFolderName: "Root",
     currentFolderWebUrl: "",
-    folderStack: [{ id: "root", name: "Root", webUrl: "" }]
+    folderStack: [{ id: "root", name: "Root", webUrl: "" }],
+    msalInitialized: false
 };
 
 const ui = {
@@ -81,6 +82,7 @@ async function boot() {
     try {
         setStatus("Initializing...");
         await msalInstance.initialize();
+        state.msalInitialized = true;
         setStatus("Checking session...");
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length) {
@@ -114,6 +116,10 @@ function setAuthUi(isSignedIn) {
 }
 
 async function signIn() {
+    if (!state.msalInitialized) {
+        setStatus("Still initializing, please wait...");
+        return;
+    }
     try {
         setStatus("Signing in...");
         const loginResponse = await msalInstance.loginPopup({

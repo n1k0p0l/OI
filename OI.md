@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Fixed:** Added initialization flag to prevent "uninitialized_public_client_application" error when clicking Sign in button before MSAL completes initialization.
+
+### 2026-02-24
 - **Changed:** Rebranded from "OneDrive Index" to "Online Ideas". Added rotating daily Douglas Adams quotes in footer. Removed "Hosted on GitHub Pages" message.
 
 ### 2026-02-24
