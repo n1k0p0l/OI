@@ -1,7 +1,7 @@
 # Copilot Instructions for OI Project
 
 ## Critical: Changelog Maintenance
-**REQUIRED:** Every code change MUST be documented in the Changelog section at the bottom of [README.md](../README.md).
+**REQUIRED:** Every code change MUST be documented in the Changelog section at the bottom of [OI.md](../OI.md).
 
 ### Changelog Entry Format:
 - Add new entries at the **top** of the Changelog section (newest first)
@@ -24,5 +24,5 @@
 ## Development Guidelines
 - Keep code simple and maintainable
 - Test changes before committing
-- Always update README.md changelog before pushing
+- Always update OI.md changelog before pushing
 - See [CONVENTIONS.md](../CONVENTIONS.md) for detailed guidelines

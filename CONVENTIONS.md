@@ -1,7 +1,7 @@
 # Development Conventions
 
 ## Changelog Maintenance
-**IMPORTANT:** All code changes must be documented in the Changelog section at the bottom of [README.md](README.md).
+**IMPORTANT:** All code changes must be documented in the Changelog section at the bottom of [OI.md](OI.md).
 
 ### Changelog Rules:
 1. Add new entries at the **top** of the Changelog section (most recent first)

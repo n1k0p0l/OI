@@ -15,6 +15,9 @@ The app reads directly from your OneDrive. Your session stays active in your bro
 ## Changelog
 
 ### 2026-02-24
+- **Changed:** Renamed README.md to OI.md. Project documentation now uses the same filename as the app's content format. Updated all references in CONVENTIONS.md and .github/copilot-instructions.md.
+
+### 2026-02-24
 - **Changed:** Simplified README.md to focus on user instructions only. Removed setup sections (Microsoft Entra app, GitHub Pages, client ID references) as these are already configured.
 
 ### 2026-02-24
